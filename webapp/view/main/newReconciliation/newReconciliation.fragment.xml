@@ -28,6 +28,9 @@
                    
                 <sfb:SmartFilterBar 
                     search="onReconciliationSearch" 
+                    beforeVariantFetch="onReconciliationBeforeVariantFetch" 
+                    afterVariantLoad="onReconciliationAfterVariantLoad" 
+                    clear="onReconciliationClear" 
                     class="SFDialogContent reconciliationSingleColumnFilterBar" 
                     id="reconciliationSmartFilterBar" 
                     showClearOnFB="false" 

@@ -87,6 +87,92 @@ sap.ui.define([
         },
 
         /**
+         * Adds the custom Country / Company Code selections to the SmartFilterBar filter
+         * data, so that they are stored together with the standard fields when a variant
+         * is saved. Without this the variant only keeps the reporting date, because both
+         * fields are custom controls the SmartFilterBar cannot serialize on its own.
+         */
+        onReconciliationBeforeVariantFetch: function () {
+            const oSmartFilterBar = this.getView().byId("reconciliationSmartFilterBar");
+            if (!oSmartFilterBar) {
+                return;
+            }
+
+            oSmartFilterBar.setFilterData({
+                _CUSTOM: {
+                    country: this._getReconciliationTokenData("reconciliationCountryListInput"),
+                    companycode: this._getReconciliationTokenData("reconciliationCompanyCodeListInput")
+                }
+            });
+        },
+
+        /**
+         * Restores the custom Country / Company Code selections after a variant was applied.
+         * Variants without custom data (e.g. the Standard variant) reset both fields.
+         */
+        onReconciliationAfterVariantLoad: function () {
+            const oSmartFilterBar = this.getView().byId("reconciliationSmartFilterBar");
+            if (!oSmartFilterBar) {
+                return;
+            }
+
+            const oFilterData = oSmartFilterBar.getFilterData() || {};
+            const oCustomData = oFilterData._CUSTOM || {};
+
+            this._setReconciliationTokens("reconciliationCountryListInput", oCustomData.country);
+            this._setReconciliationTokens("reconciliationCompanyCodeListInput", oCustomData.companycode);
+        },
+
+        /**
+         * Handler for the SmartFilterBar clear event - also clears the custom controls
+         */
+        onReconciliationClear: function () {
+            this._setReconciliationTokens("reconciliationCountryListInput", []);
+            this._setReconciliationTokens("reconciliationCompanyCodeListInput", []);
+        },
+
+        /**
+         * Reads the tokens of a custom MultiInput as plain data for variant persistence
+         * @private
+         */
+        _getReconciliationTokenData: function (sInputId) {
+            const oMultiInput = this.getView().byId(sInputId);
+            if (!oMultiInput) {
+                return [];
+            }
+
+            return oMultiInput.getTokens().map(function (oToken) {
+                return {
+                    key: oToken.getKey(),
+                    text: oToken.getText()
+                };
+            });
+        },
+
+        /**
+         * Applies previously persisted token data to a custom MultiInput
+         * @private
+         */
+        _setReconciliationTokens: function (sInputId, aTokenData) {
+            const oMultiInput = this.getView().byId(sInputId);
+            if (!oMultiInput) {
+                return;
+            }
+
+            const aTokens = (aTokenData || []).filter(function (oTokenData) {
+                return oTokenData && oTokenData.key;
+            }).map(function (oTokenData) {
+                return new Token({
+                    key: oTokenData.key,
+                    text: oTokenData.text || oTokenData.key
+                });
+            });
+
+            oMultiInput.setValueState("None");
+            oMultiInput.setTokens(aTokens);
+        },
+
+        /**
          * Handler for assigned filters changed
          */
         onReconciliationAssignedFiltersChanged: function() {
